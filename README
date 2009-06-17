@@ -27,13 +27,15 @@ The lost_in_translation task shows you any I18n keys in your code that are do no
 
 The merge_keys task is supposed to be used in conjunction with Sven Fuch's Rails I18n TextMate bundle (http://github.com/svenfuchs/rails-i18n/tree/master). Texts and keys extracted with the TextMate bundle end up in the temporary file log/translations.yml. When you run the merge_keys rake task the keys are moved over to the corresponding I18n locale file, i.e. config/locales/sv.yml. The merge_keys task also checks for overwrites of existing keys by warning you that one of your extracted keys already exists with a different translation.
 
-The google task is used for auto translating from one locale to another using Google Translate.
+The google task is used for auto translating from one locale to another using Google Translate. Send the environment variables like this:
+
+  rake translate:google FROM=en TO=de
 
 Installation
 =========
 Obtain the source with:
 
-./script/plugin install git://github.com/newsdesk/translate.git 
+./script/plugin install git://github.com/newsdesk/translate.git
 
 To mount the plugin, add the following to your config/routes.rb file:
 
@@ -56,3 +58,4 @@ Authors
 Many thanks to http://newsdesk.se for sponsoring the development of this plugin.
 
 Copyright (c) 2009 Peter Marklund, released under the MIT license
+
