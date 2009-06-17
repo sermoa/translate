@@ -117,7 +117,7 @@ namespace :translate do
       from_text = I18n.backend.send(:lookup, ENV['FROM'], key).to_s
       to_text = I18n.backend.send(:lookup, ENV['TO'], key)
       if !from_text.blank? && to_text.blank?
-        print "#{key}: '#{from_text[0, 40]}' => "
+        print "#{key}: '#{from_text}' => "
         if !translations[from_text]
           lookup_text = from_text.gsub(/\{\{([a-z_]+)\}\}/i, '__\1__')
           response = GoogleApi.translate(lookup_text, ENV['TO'], ENV['FROM'])
@@ -127,10 +127,10 @@ namespace :translate do
           translation.gsub!(/__([a-z_]+)__/i, '{{\1}}')
           # Google translate sometimes replaces {{foobar}} with (()) foobar. We skip these
           if translation !~ /\(\(\)\)/
-            puts "'#{translation[0, 40]}'"
+            puts "'#{translation}'"
             I18n.backend.store_translations(ENV['TO'].to_sym, Translate::Keys.to_deep_hash({key => translation}))
           else
-            puts "SKIPPING since interpolations were messed up: '#{translation[0,40]}'"
+            puts "SKIPPING since interpolations were messed up: '#{translation}'"
           end
         else
           puts "NO TRANSLATION - #{response.inspect}"
