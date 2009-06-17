@@ -1,4 +1,5 @@
 require 'yaml'
+require 'httparty'
 
 class Hash
   def deep_merge(other)
@@ -71,7 +72,7 @@ namespace :translate do
     Translate::Keys.new.send(:extract_i18n_keys, new_translations[locale]).each do |key|
       new_text = key.split(".").inject(new_translations[locale]) { |hash, sub_key| hash[sub_key] }
       existing_text = I18n.backend.send(:lookup, locale.to_sym, key)
-      if existing_text && new_text != existing_text        
+      if existing_text && new_text != existing_text
         puts "ERROR: key #{key} already exists with text '#{existing_text.inspect}' and would be overwritten by new text '#{new_text}'. " +
           "Set environment variable OVERWRITE=1 if you really want to do this."
         overwrites = true
@@ -83,7 +84,7 @@ namespace :translate do
       Translate::Storage.new(locale).write_to_file
     end
   end
-  
+
   desc "Apply Google translate to auto translate all texts in locale ENV['FROM'] to locale ENV['TO']"
   task :google => :environment do
     raise "Please specify FROM and TO locales as environment variables" if ENV['FROM'].blank? || ENV['TO'].blank?
@@ -99,7 +100,7 @@ namespace :translate do
           get("/ajax/services/language/translate",
             :query => {:langpair => "#{from}|#{to}", :q => string, :v => 1.0},
             :format => :json)
-        rescue 
+        rescue
           tries += 1
           puts("SLEEPING - retrying in 5...")
           sleep(5)
@@ -118,11 +119,12 @@ namespace :translate do
       if !from_text.blank? && to_text.blank?
         print "#{key}: '#{from_text[0, 40]}' => "
         if !translations[from_text]
-          response = GoogleApi.translate(from_text, ENV['TO'], ENV['FROM'])
+          lookup_text = from_text.gsub(/\{\{([a-z_]+)\}\}/i, '__\1__')
+          response = GoogleApi.translate(lookup_text, ENV['TO'], ENV['FROM'])
           translations[from_text] = response["responseData"] && response["responseData"]["translatedText"]
         end
         if !(translation = translations[from_text]).blank?
-          translation.gsub!(/\(\(([a-z_.]+)\)\)/i, '{{\1}}')
+          translation.gsub!(/__([a-z_]+)__/i, '{{\1}}')
           # Google translate sometimes replaces {{foobar}} with (()) foobar. We skip these
           if translation !~ /\(\(\)\)/
             puts "'#{translation[0, 40]}'"
@@ -135,8 +137,9 @@ namespace :translate do
         end
       end
     end
-    
-    puts "\nTime elapsed: #{(((Time.now - start_at) / 60) * 10).to_i / 10.to_f} minutes"    
+
+    puts "\nTime elapsed: #{(((Time.now - start_at) / 60) * 10).to_i / 10.to_f} minutes"
     Translate::Storage.new(ENV['TO'].to_sym).write_to_file
   end
 end
+
